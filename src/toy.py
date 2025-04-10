@@ -17,7 +17,8 @@ import librosa
 import torch
 from IPython.display import Audio, display
 
-model_name = "canopylabs/orpheus-tts-0.1-pretrained"
+# model_name = "canopylabs/orpheus-tts-0.1-pretrained"
+model_name = "canopylabs/3b-ko-ft-research_release"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -50,31 +51,28 @@ model.cuda()
 
 ### CHANGE THIS TO YOUR OWN FILE AND TEXT
 
-my_wav_file_is = "X.wav"
-and_the_transcript_is = "Something or the other"
+character = "female"
+
+if character == "female":
+  my_wav_file_is = "src/Bianca_joke_2_01.wav"
+  and_the_transcript_is = "오른손? 무슨 말인지 모르겠구나. 흑염룡? 무슨 유치한 단어냐. 알아들을 수 있는 말을 하거라, 한심하기는."
+elif character == "male":
+  my_wav_file_is = "src/Luke_taunt_Cathy_1_ko.wav"
+  and_the_transcript_is = "의사 선생님? 거즈를 뜯고 난 봉지는 좀 치워주세요~"
+
 
 the_model_should_say = [
-  "I finally got into the university of my dreams! I can't believe all this hard work actually  paid off!",
-  "Why is your frickin' Waymo blocking the frickin' road? GET OUT OF THE WAY!",
-  "I'm so sorry to hear about your pet, but you know, he'll pull through.",
-  "Conversational, uhm, systems, tend to speak pretty robotically, because- because they don't, really understand how, uhm, humans talk."
-
+  "<한숨> 이제부터 오르페우스는 이 진조께서 직접 지배해 주겠느니라!!",
+  "머리부터 발끝까지 오로나민씨, 오로나민씨! <작은 웃음>"
 ]
 
 #@title Tokenising your stuff for the prompt
-%%capture
-
 ''' Here we tokenise the prompt you gave us, we also tokenise the prompts you want the model to say
-
 The template is:
-
 start_of_human, start_of_text, text, end_of_text, start_of_ai, start_of_speech, speech, end_of_speech, end_of_ai, start_of_human, text, end_of_human and then generate from here
-
 '''
 
-
 filename = my_wav_file_is
-
 audio_array, sample_rate = librosa.load(filename, sr=24000)
 
 def tokenise_audio(waveform):
@@ -158,7 +156,6 @@ with torch.no_grad():
 # generated_ids = torch.cat([generated_ids, torch.tensor([[128262]]).to("cuda")], dim=1) # EOAI
 
 #@title Convert output to speech
-%%capture
 token_to_find = 128257
 token_to_remove = 128258
 
@@ -210,7 +207,7 @@ for code_list in code_lists:
   samples = redistribute_codes(code_list)
   my_samples.append(samples)
 
-#@title Display Speech
-from IPython.display import Audio, display
-for samples in my_samples:
-  display(Audio(samples.detach().squeeze().to("cpu").numpy(), rate=24000))
+import soundfile as sf
+for i, samples in enumerate(my_samples):
+    audio_data = samples.detach().squeeze().to("cpu").numpy()
+    sf.write(f'1_output_speech_{i}_{character}.wav', audio_data, samplerate=24000)
